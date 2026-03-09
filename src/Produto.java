@@ -6,8 +6,8 @@ public abstract class Produto {
 	
 	private static final double MARGEM_PADRAO = 0.2;
 	protected String descricao;
-	private double precoCusto;
-	private double margemLucro;
+	protected double precoCusto;
+	protected double margemLucro;
 	
 	/**
      * Inicializador privado. Os valores default, em caso de erro, são:
@@ -27,18 +27,6 @@ public abstract class Produto {
 		}
 	}
 	
-
-	/**
-	* Igualdade de produtos: caso possuam o mesmo nome/descrição.
-	* @param obj Outro produto a ser comparado
-	* @return booleano true/false conforme o parâmetro possua a descrição igual ou não a este produto.
-	*/
-	@Override
-	public boolean equals(Object obj){
-	Produto outro = (Produto)obj;
-	return this.descricao.toLowerCase().equals(outro.descricao.toLowerCase());
-	}
-
 	/**
      * Construtor completo. Os valores default, em caso de erro, são:
      * "Produto sem descrição", R$ 0.00, 0.0  
@@ -46,7 +34,7 @@ public abstract class Produto {
      * @param precoCusto Preço do produto (mínimo 0.01)
      * @param margemLucro Margem de lucro (mínimo 0.01)
      */
-	public Produto(String desc, double precoCusto, double margemLucro) {
+	protected Produto(String desc, double precoCusto, double margemLucro) {
 		init(desc, precoCusto, margemLucro);
 	}
 	
@@ -57,7 +45,7 @@ public abstract class Produto {
      * @param desc Descrição do produto (mínimo de 3 caracteres)
      * @param precoCusto Preço do produto (mínimo 0.01)
      */
-	public Produto(String desc, double precoCusto) {
+	protected Produto(String desc, double precoCusto) {
 		init(desc, precoCusto, MARGEM_PADRAO);
 	}
 	
@@ -65,49 +53,36 @@ public abstract class Produto {
      * Retorna o valor de venda do produto, considerando seu preço de custo e margem de lucro.
      * @return Valor de venda do produto (double, positivo)
      */
-	public double valorDeVenda() {
+	public double valorVenda() {
 		return (precoCusto * (1.0 + margemLucro));
 	}
-	
-	/**
-	* Gera uma linha de texto a partir dos dados do produto
-	* @return Uma string no formato "tipo; descrição;preçoDeCusto;margemDeLucro;[dataDeValidade]"
-	*/
-	public String gerarDadosTexto(){
-		String precoFormatado = String.format("%.2F", precoCusto).replace(";", ",");
-		String margemFormatada = String.format("%.2F", margemLucro).replace(";", ",")
 
-		return String.format("1;%s;%s;%s",descricao,precoFormatado,margemFormatada);
+    public static Produto criarDoTexto(String linha) {
+        String[] partes = linha.split(";");
+        int tipo = Integer.parseInt(partes[0]);
+        String descricao = partes[1];
+        double precoDeCusto = Double.parseDouble(partes[2]);
+        double margemDeLucro = Double.parseDouble(partes[3]);
+
+        if (tipo == 1) {
+            return new ProdutoNaoPerecivel(descricao, precoDeCusto, margemDeLucro);
+        } else if (tipo == 2) {
+            LocalDate validade = LocalDate.parse(partes[4], DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            return new ProdutoPerecivel(descricao, precoDeCusto, margemDeLucro, validade);
+        }
+
+        throw new IllegalArgumentException("Tipo de produto inválido.");
+    }
+
+	public String getDescricao() {
+		return descricao;
 	}
-	
-	/**
-	* Cria um produto a partir de uma linha de dados em formato texto. A linha de dados deve estar de acordo com a
-	formatação
-	* "tipo; descrição;preçoDeCusto;margemDeLucro;[dataDeValidade]"
-	* ou o funcionamento não será garantido. Os tipos são 1 para produto não perecível e 2 para perecível.
-	* @param linha Linha com os dados do produto a ser criado.
-	* @return Um produto com os dados recebidos
-	*/
-	static Produto criarDoTexto(String linha){
-	Produto novoProduto = null;
 
-	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-	String[] atributos = linha.split(";");
-	int tipo = Integer.parseInt(atributos[0]);
-	String descricao = atributos[1];
-	double preco = Double.parseDouble(atributos[2]);
-	double margem = Double.parseDouble(atributos[3]);
-
-		if (tipo == 1){
-			novoProduto = new ProdutoNaoPerecivel(descricao,preco,margem);
-		}
-		else{
-			LocalDate = datavalidade = LocalDate.parse(atributos[4], formatoData);
-			novoProduto = new ProdutoPerecivel(descricao, preco, margem, datavalidade)
-		}
-
-	return novoProduto;
-	}
+    /**
+     * Gera uma linah de texto a partir dos dados do produto
+     * @return Uma string no formato "tipo; descrição;preçoDeCusto;margemDeLucro;[dataDeValidade]"
+     */
+    public abstract String gerarDadosTexto();
 
 	/**
      * Descrição, em string, do produto, contendo sua descrição e o valor de venda.
@@ -119,7 +94,12 @@ public abstract class Produto {
     	
     	NumberFormat moeda = NumberFormat.getCurrencyInstance();
     	
-		return String.format("NOME: " + descricao + ": " + moeda.format(valorDeVenda()));
+		return String.format("NOME: " + descricao + ": " + moeda.format(valorVenda()));
 	}
-}
 
+    @Override
+    public boolean equals(Object obj) {
+        Produto outro = (Produto) obj;
+        return this.descricao.toLowerCase().equals(outro.descricao.toLowerCase());
+    }
+}
