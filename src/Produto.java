@@ -48,7 +48,7 @@ public abstract class Produto {
 	protected Produto(String desc, double precoCusto) {
 		init(desc, precoCusto, MARGEM_PADRAO);
 	}
-	
+
 	 /**
      * Retorna o valor de venda do produto, considerando seu preço de custo e margem de lucro.
      * @return Valor de venda do produto (double, positivo)
